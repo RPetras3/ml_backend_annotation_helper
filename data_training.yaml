@@ -1,0 +1,5 @@
+path: /dataset_training_grounds  # Parent directory of train/ and val/
+train: dataset_training_grounds/train/images
+val: dataset_training_grounds/val/images
+nc: 2                  # Number of classes
+names: [!ENV ${ANIMAL_CLASS}, 'vital_point']

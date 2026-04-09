@@ -1,3 +1,7 @@
+from pyexpat import model
+
+import os
+import json
 import pandas as pd
 from typing import List, Dict, Optional
 from label_studio_ml.model import LabelStudioMLBase
@@ -60,6 +64,8 @@ class ImageAnnotationApplier(LabelStudioMLBase):
         # Initialize any model or configuration here
         # If you have specific annotation rules, load them here
         self.annotation_rule = kwargs.get('annotation_rule', {})
+        self.model_weights_file = 'model/deer_weights.pt'  # Placeholder for model weights file
+        self.model_base = 'yolo5'  # Placeholder for the base model (e.g., YOLOv5)
         
     def setup(self):
         """Configure any parameters of your model here
@@ -126,6 +132,26 @@ class ImageAnnotationApplier(LabelStudioMLBase):
         #         }
         #     }]
         # }]
+        if self.annotation_rule == 'train_first':
+            # Extract the training tasks and their annotations from the context
+            training_tasks = context.get('training_tasks', [])
+            for task in training_tasks:
+                # Copy data from the task off to the annotation_training_grounds directory for training
+                name = os.path.basename(task['data']['image_url'])
+                dest_path = os.path.join('annotation_training_grounds', 'train', 'images', name)
+                os.makedirs(os.path.dirname(dest_path), exist_ok=True)
+                # The URL provided should be a local path to the file, so we can copy it directly
+                os.system(f'cp {task["data"]["image_url"]} {dest_path}')
+                print(f'Copied {task["data"]["image_url"]} to {dest_path}')
+                # Copy the rest of the task data (e.g., annotations) to a corresponding JSON file for training
+                annotation_dest_path = os.path.join('annotation_training_grounds', 'train', 'annotations', f'{os.path.splitext(name)[0]}.json')
+                # Create a JSON entry for the annotation that matches YOLO/COCO format.
+                os.makedirs(os.path.dirname(annotation_dest_path), exist_ok=True)
+                with open(annotation_dest_path, 'w') as f:
+                    json.dump(task['annotations'], f)
+                print(f'Created annotation JSON at {annotation_dest_path}')
+
+        
         for task in tasks:
             task['predictions'] = self._apply_annotation_logic(task, **kwargs)
         

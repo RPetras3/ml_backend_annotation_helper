@@ -1,0 +1,5 @@
+path: /annotation_training_grounds  # Parent directory of train/ and val/
+train: annotation_training_grounds/train/images
+val: annotation_training_grounds/val/images
+nc: 2                  # Number of classes
+names: [!ENV ${ANIMAL_CLASS}, 'vital_point']
